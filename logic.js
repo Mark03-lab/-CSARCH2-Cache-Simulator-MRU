@@ -1,7 +1,7 @@
-$(document).ready(function() {
+$(document).ready(function () {
     setReadOnlyFields(true);
 
-    $("#submitBtn").click(function() {
+    $("#submitBtn").click(function () {
         resetError();
         const input = getInput();
 
@@ -17,12 +17,12 @@ $(document).ready(function() {
         }
     });
 
-    $("#resetBtn").click(function() {
+    $("#resetBtn").click(function () {
         resetError();
         resetInput();
     });
 
-    $("#downloadBtn").click(function() {
+    $("#downloadBtn").click(function () {
         downloadTxt();
     });
 
@@ -34,7 +34,13 @@ $(document).ready(function() {
     }
 
     function downloadTxt() {
-        const blob = new Blob([document.getElementById("generatedText").innerHTML], { type: "text/plain;charset=utf-8;" });
+        const generatedText = document.getElementById("generatedText").value;
+        if (generatedText.trim() === "") {
+            displayError("ERROR: No results available to download.");
+            return;
+        }
+
+        const blob = new Blob([generatedText], { type: "text/plain;charset=utf-8;" });
         saveAs(blob, "result.txt");
     }
 
@@ -61,19 +67,21 @@ $(document).ready(function() {
         document.getElementById("avgMemAccessTime").value = output.avgAccessTime;
         document.getElementById("totalMemAccessTime").value = output.totalAccessTime;
 
-        const snapshotTable = generateMemoryTable(output.memorySnapshot);
-        document.getElementById("memorySnapshot").innerHTML = snapshotTable;
+        const memorySnapshotText = output.memorySnapshot;
+        document.getElementById("memorySnapshot").innerHTML = memorySnapshotText;
 
-        document.getElementById("generatedText").innerHTML = `
-            Cache hits: ${output.cacheHits}
-            Cache misses: ${output.cacheMisses}
-            Miss penalty: ${output.penaltyMiss}
-            Average memory access time: ${output.avgAccessTime}
-            Total memory access time: ${output.totalAccessTime}
+        const generatedTextContent = `
+Cache Hits: ${output.cacheHits}
+Cache Misses: ${output.cacheMisses}
+Miss Penalty: ${output.penaltyMiss}
+Average Memory Access Time: ${output.avgAccessTime}
+Total Memory Access Time: ${output.totalAccessTime}
 
-            Cache memory snapshot:
-            ${output.memorySnapshot}
+Cache Memory Snapshot:
+${output.memorySnapshot}
         `;
+
+        document.getElementById("generatedText").innerHTML = `${generatedTextContent.trim()}`;
         setReadOnlyFields(true);
     }
 
@@ -145,7 +153,7 @@ $(document).ready(function() {
         const hitRate = cacheHits / (cacheHits + cacheMisses);
         const penaltyMiss = (2 * cacheCycleTime) + (blockSize * memCycleTime);
         const avgAccessTime = (hitRate * cacheCycleTime) + ((1 - hitRate) * penaltyMiss);
-        const totalAccessTime = calculateTotalAccessTime(cacheHits, cacheMisses, cacheCycleTime, memCycleTime, blockSize);    
+        const totalAccessTime = calculateTotalAccessTime(cacheHits, cacheMisses, cacheCycleTime, memCycleTime, blockSize);
         const memorySnapshot = generateMemorySnapshot(cacheMemory);
 
         const output = {
@@ -156,10 +164,10 @@ $(document).ready(function() {
             totalAccessTime: totalAccessTime,
             memorySnapshot: memorySnapshot
         };
-    
+
         return output;
     }
-    
+
     function validateMemSize(mmSize, mmUnit, progFlow, progUnit, blockSize, memSizeError) {
         if (mmUnit === "words") {
             validateProgFlowWords(mmSize, progFlow, progUnit, blockSize, memSizeError);
@@ -167,7 +175,7 @@ $(document).ready(function() {
             validateProgFlowBlocks(mmSize, progFlow, blockSize, memSizeError);
         }
     }
-    
+
     function validateProgFlowWords(mmSize, progFlow, progUnit, blockSize, memSizeError) {
         if (progUnit === "words") {
             validateAddressRange(progFlow, mmSize - 1, memSizeError);
@@ -179,12 +187,12 @@ $(document).ready(function() {
             validateAddressRange(progFlow, mmSizeInBlocks - 1, memSizeError);
         }
     }
-    
+
     function validateProgFlowBlocks(mmSize, progFlow, blockSize, memSizeError) {
         const memSizeInWords = mmSize * blockSize;
         validateAddressRange(progFlow, memSizeInWords - 1, memSizeError);
     }
-    
+
     function validateAddressRange(addresses, maxAddress, memSizeError) {
         addresses.forEach(addr => {
             if (addr > maxAddress) {
@@ -192,7 +200,7 @@ $(document).ready(function() {
             }
         });
     }
-    
+
     function updateCacheMemory(cacheMemory, setIndex, block, timeStamp) {
         for (let j = 0; j < cacheMemory[setIndex].length; j++) {
             if (cacheMemory[setIndex][j] && cacheMemory[setIndex][j].address === block) {
@@ -200,7 +208,7 @@ $(document).ready(function() {
                 return true;
             }
         }
-    
+
         const emptySlot = cacheMemory[setIndex].findIndex(slot => !slot);
         const maxTimeStampIndex = cacheMemory[setIndex].reduce((maxIndex, slot, index) => {
             if (!slot || (slot && slot.timeStamp > cacheMemory[setIndex][maxIndex].timeStamp)) {
@@ -208,40 +216,60 @@ $(document).ready(function() {
             }
             return maxIndex;
         }, 0);
-    
+
         const replacementIndex = emptySlot !== -1 ? emptySlot : maxTimeStampIndex;
         cacheMemory[setIndex][replacementIndex] = { timeStamp, address: block };
-    
+
         return false;
     }
-    
+
     function calculateTotalAccessTime(cacheHits, cacheMisses, cacheCycleTime, memCycleTime, blockSize) {
         return (cacheHits * cacheCycleTime * blockSize) +
             (cacheMisses * (cacheCycleTime + memCycleTime) * blockSize) +
             (cacheMisses * cacheCycleTime);
     }
-    
+
     function generateMemorySnapshot(cacheMemory) {
         let snapshot = "";
         cacheMemory.forEach((set, setIndex) => {
             set.forEach((block, blockIndex) => {
-                const blockAddress = block ? block.address : "undefined";
+                const blockAddress = block ? block.address : "Empty";
                 snapshot += `(Set ${setIndex}, Block ${blockIndex}) <= Block: ${blockAddress}\n`;
             });
         });
         return snapshot;
     }
-    
-    function generateMemoryTable(snapshot) {
-        const rows = snapshot.split('\n').filter(row => row.trim() !== '');
-        let table = '<table border="1"><tr><th>Set</th><th>Block</th><th>Block Address</th></tr>';
-        rows.forEach(row => {
-            const parts = row.match(/$begin:math:text$Set (\\d+), Block (\\d+)$end:math:text$ <= Block: (\w+)/);
-            if (parts) {
-                table += `<tr><td>${parts[1]}</td><td>${parts[2]}</td><td>${parts[3]}</td></tr>`;
-            }
-        });
-        table += '</table>';
-        return table;
-    }
+
+    // function generateMemoryTable(snapshot) {
+    //     const rows = snapshot.split('\n').filter(row => row.trim() !== '');
+    //     let table = '<table><thead><tr><th>Set</th><th>Block 0</th><th>Block 1</th></tr></thead><tbody>';
+    //     let sets = {};
+
+    //     rows.forEach(row => {
+    //         const parts = row.match(/\(Set (\d+), Block (\d+)\) <= Block: (.+)/);
+
+    //         if (parts) {
+    //             const setIndex = parts[1];
+    //             const blockIndex = parts[2];
+    //             const blockAddress = parts[3];
+
+    //             if (!sets[setIndex]) {
+    //                 sets[setIndex] = {};
+    //             }
+
+    //             sets[setIndex][blockIndex] = blockAddress;
+    //         }
+    //     });
+
+    //     Object.keys(sets).forEach(setIndex => {
+    //         table += `<tr><td>${setIndex}</td>`;
+    //         for (let i = 0; i < 2; i++) {
+    //             table += `<td>${sets[setIndex][i] !== undefined ? sets[setIndex][i] : 'Empty'}</td>`;
+    //         }
+    //         table += `</tr>`;
+    //     });
+
+    //     table += '</tbody></table>';
+    //     return table;
+    // }
 });

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,69 +8,94 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="logic.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-    <h1>Cache Memory Simulator</h1>
-    <div id="errorMessage" style="color: red;"></div>
-    <form id="cacheSimulatorForm">
-        <label for="blockDimension">Block Size:</label>
-        <input type="text" id="blockDimension" name="blockDimension" value="2"><br><br>
+    <div class="container">
+        <h1>Cache Memory Simulator (Block-Set Associative MRU)</h1>
+        <div class="content">
+            <form id="cacheSimulatorForm">
+                <h2>Input</h2>
+                <label for="blockDimension">Block Size:</label>
+                <input type="text" id="blockDimension" name="blockDimension" value="2"><br><br>
 
-        <label for="numSets">Set Size:</label>
-        <input type="text" id="numSets" name="numSets" value="2"><br><br>
+                <label for="numSets">Set Size:</label>
+                <input type="text" id="numSets" name="numSets" value="2"><br><br>
 
-        <label for="mainMemSize">Main Memory Size:</label>
-        <input type="text" id="mainMemSize" name="mainMemSize" value="256">
-        <select id="mainMemUnit" name="mainMemUnit">
-            <option value="blocks">Blocks</option>
-            <option value="words">Words</option>
-        </select><br><br>
+                <div class="input-group">
+                    <label for="mainMemSize">Main Memory Size:</label>
+                    <div class="input-select">
+                        <input type="text" id="mainMemSize" name="mainMemSize" value="256">
+                        <select id="mainMemUnit" name="mainMemUnit">
+                            <option value="blocks">Blocks</option>
+                            <option value="words">Words</option>
+                        </select>
+                    </div>
+                </div><br><br>
 
-        <label for="cacheSize">Cache Memory Size:</label>
-        <input type="text" id="cacheSize" name="cacheSize" value="4">
-        <select id="cacheUnit" name="cacheUnit">
-            <option value="blocks">Blocks</option>
-            <option value="words">Words</option>
-        </select><br><br>
+                <div class="input-group">
+                    <label for="cacheSize">Cache Memory Size:</label>
+                    <div class="input-select">
+                        <input type="text" id="cacheSize" name="cacheSize" value="4">
+                        <select id="cacheUnit" name="cacheUnit">
+                            <option value="blocks">Blocks</option>
+                            <option value="words">Words</option>
+                        </select>
+                    </div>
+                </div><br><br>
 
-        <label for="cacheCycle">Cache Cycle Time:</label>
-        <input type="text" id="cacheCycle" name="cacheCycle" value="1"><br><br>
+                <label for="cacheCycle">Cache Cycle Time (in ns):</label>
+                <input type="text" id="cacheCycle" name="cacheCycle" value="1"><br><br>
 
-        <label for="memoryCycle">Memory Cycle Time:</label>
-        <input type="text" id="memoryCycle" name="memoryCycle" value="10"><br><br>
+                <label for="memoryCycle">Memory Cycle Time (in ns):</label>
+                <input type="text" id="memoryCycle" name="memoryCycle" value="10"><br><br>
 
-        <label for="programSequence">Program Flow:</label>
-        <input type="text" id="programSequence" name="programSequence" value="1 7 5 0 2 1 5 6 5 2 2 0">
-        <select id="programUnit" name="programUnit">
-            <option value="blocks">Blocks</option>
-            <option value="words">Words</option>
-        </select><br><br>
+                <div class="input-group">
+                    <label for="programSequence">Program Flow (space separated numbers e.g. "1 7 5 ... "):</label>
+                    <div class="input-select">
+                        <input type="text" id="programSequence" name="programSequence" value="1 7 5 0 2 1 5 6 5 2 2 0">
+                        <select id="programUnit" name="programUnit">
+                            <option value="blocks">Blocks</option>
+                            <option value="words">Words</option>
+                        </select>
+                    </div>
+                </div><br>
 
-        <input type="button" id="submitBtn" value="Submit">
-        <input type="button" id="resetBtn" value="Reset">
-        <input type="button" id="downloadBtn" value="Download Result"><br><br>
-    </form>
+                <div class="button-group">
+                    <input type="button" id="submitBtn" value="Submit">
+                    <input type="button" id="resetBtn" value="Reset">
+                    <input type="button" id="downloadBtn" value="Download Result">
+                </div>
+                <div id="errorMessage" style="color: red;"></div>
+            </form>
 
-    <h2>Results</h2>
-    <label for="hitCount">Cache Hits:</label>
-    <input type="text" id="hitCount" name="hitCount" readonly><br><br>
+            <div class="results">
+                <h2>Results</h2>
+                <label for="hitCount">Cache Hits:</label>
+                <input type="text" id="hitCount" name="hitCount" readonly><br><br>
 
-    <label for="missCount">Cache Misses:</label>
-    <input type="text" id="missCount" name="missCount" readonly><br><br>
+                <label for="missCount">Cache Misses:</label>
+                <input type="text" id="missCount" name="missCount" readonly><br><br>
 
-    <label for="missDelay">Miss Penalty:</label>
-    <input type="text" id="missDelay" name="missDelay" readonly><br><br>
+                <label for="missDelay">Miss Penalty:</label>
+                <input type="text" id="missDelay" name="missDelay" readonly><br><br>
 
-    <label for="avgMemAccessTime">Average Memory Access Time:</label>
-    <input type="text" id="avgMemAccessTime" name="avgMemAccessTime" readonly><br><br>
+                <label for="avgMemAccessTime">Average Memory Access Time:</label>
+                <input type="text" id="avgMemAccessTime" name="avgMemAccessTime" readonly><br><br>
 
-    <label for="totalMemAccessTime">Total Memory Access Time:</label>
-    <input type="text" id="totalMemAccessTime" name="totalMemAccessTime" readonly><br><br>
+                <label for="totalMemAccessTime">Total Memory Access Time:</label>
+                <input type="text" id="totalMemAccessTime" name="totalMemAccessTime" readonly><br><br>
 
-    <div id="memorySnapshot"></div>
+                <label for="memorySnapshot">Cache Snapshot:</label>
+                <textarea id="memorySnapshot" name="memorySnapshot" rows="5" cols="50" readonly></textarea><br><br>
 
-    <label for="generatedText">Generated Text:</label>
-    <hr width="0px">
-    <textarea id="generatedText" name="generatedText" rows="10" cols="50" readonly></textarea>
+                <label for="generatedText">Generated Text:</label>
+                <textarea id="generatedText" name="generatedText" rows="10" cols="50" readonly></textarea>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>
